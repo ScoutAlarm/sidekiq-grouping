@@ -4,7 +4,13 @@ module Sidekiq
       def call(worker_class, msg, queue, redis_pool = nil)
         return yield if (defined?(Sidekiq::Testing) && Sidekiq::Testing.inline?)
 
-        worker_class = worker_class.camelize.constantize if worker_class.is_a?(String)
+        if worker_class.is_a?(String)
+          worker_class = worker_class.camelize.constantize rescue nil
+          if worker_class.nil?
+            return yield
+          end
+        end
+
         options = worker_class.get_sidekiq_options
 
         batch =
